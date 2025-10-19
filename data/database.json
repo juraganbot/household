@@ -1,0 +1,22 @@
+{
+  "protectedEmails": [
+    {
+      "id": "1760901385638",
+      "email": "planetspure@waroengsuite.com",
+      "accessKey": "TAMAGO",
+      "createdAt": "2025-10-19T19:16:25.638Z",
+      "isLocked": true
+    }
+  ],
+  "adminConfig": {
+    "masterKey": "WAROENGKU_ADMIN_2025",
+    "createdAt": "2025-10-20T00:00:00.000Z",
+    "lastModified": "2025-10-19T19:21:23.266Z"
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "totalProtectedEmails": 1,
+    "totalLocked": 1,
+    "totalUnlocked": 0
+  }
+}
