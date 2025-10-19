@@ -39,6 +39,11 @@ export default function Home() {
   const [selectedMessage, setSelectedMessage] = useState<EmailMessage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [securityStats, setSecurityStats] = useState<{
+    totalScanned: number;
+    verificationEmailsBlocked: number;
+    safeEmailsReturned: number;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -136,6 +141,7 @@ export default function Home() {
 
       setMessages(data.messages || []);
       setSearchCompleted(true);
+      setSecurityStats(data.security || null);
       
       if (data.messages && data.messages.length > 0) {
         setTimeout(() => fireConfetti(), 300);
@@ -371,15 +377,31 @@ export default function Home() {
         {/* Results Section */}
         {searchCompleted && messages.length > 0 && (
           <div className="w-full px-4 sm:px-0 space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
-            {/* Results Header */}
-            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-5 text-green-600 dark:text-green-500" />
-                <span className="font-semibold text-sm">
-                  {messages.length} message{messages.length > 1 ? "s" : ""} found
-                </span>
+            {/* Results Header with Security Stats */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-5 text-green-600 dark:text-green-500" />
+                  <span className="font-semibold text-sm">
+                    {messages.length} message{messages.length > 1 ? "s" : ""} found
+                  </span>
+                </div>
+                <Inbox className="size-4 text-muted-foreground" />
               </div>
-              <Inbox className="size-4 text-muted-foreground" />
+              
+              {/* Security Stats Badge */}
+              {securityStats && securityStats.verificationEmailsBlocked > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg p-2 px-3"
+                >
+                  <Shield className="size-4 text-green-600 dark:text-green-500" />
+                  <span className="text-xs font-medium text-green-700 dark:text-green-400">
+                    🛡️ Protected: {securityStats.verificationEmailsBlocked} verification email{securityStats.verificationEmailsBlocked > 1 ? 's' : ''} blocked
+                  </span>
+                </motion.div>
+              )}
             </div>
 
             <div className="relative">

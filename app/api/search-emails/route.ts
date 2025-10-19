@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Imap from "imap";
 import { simpleParser } from "mailparser";
+import { filterVerificationEmails, getFilterStats } from "@/lib/security";
 
 interface EmailMessage {
   id: string;
@@ -141,11 +142,20 @@ export async function POST(request: NextRequest) {
     };
 
     const results = await searchEmails();
+    
+    // Filter out verification emails
+    const filteredResults = filterVerificationEmails(results);
+    const stats = getFilterStats(results);
 
     return NextResponse.json({
       success: true,
-      count: results.length,
-      messages: results,
+      count: filteredResults.length,
+      messages: filteredResults,
+      security: {
+        totalScanned: stats.total,
+        verificationEmailsBlocked: stats.filtered,
+        safeEmailsReturned: stats.remaining,
+      },
     });
   } catch (error) {
     console.error("IMAP Error:", error);
