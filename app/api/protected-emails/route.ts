@@ -29,11 +29,18 @@ export async function GET(request: NextRequest) {
       emails,
       stats,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch protected emails' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    } else {
+      return NextResponse.json(
+        { error: 'Failed to get protected emails' },
+        { status: 500 }
+      );
+    }
   }
 }
 
@@ -65,9 +72,9 @@ export async function POST(request: NextRequest) {
       success: true,
       email: newEmail,
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Failed to add protected email' },
+      { error: error instanceof Error ? error.message : 'Failed to add protected email' },
       { status: 500 }
     );
   }
@@ -107,9 +114,9 @@ export async function PATCH(request: NextRequest) {
       success: true,
       email: updatedEmail,
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Failed to update protected email' },
+      { error: error instanceof Error ? error.message : 'Failed to update protected email' },
       { status: 500 }
     );
   }
@@ -150,9 +157,9 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Email deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Failed to delete protected email' },
+      { error: error instanceof Error ? error.message : 'Failed to delete protected email' },
       { status: 500 }
     );
   }

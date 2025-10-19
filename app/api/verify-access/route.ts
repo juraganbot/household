@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
       locked: false,
       message: 'Access granted',
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
-      { error: error.message || 'Failed to verify access' },
+      { error: error instanceof Error ? error.message : 'Failed to verify access' },
       { status: 500 }
     );
   }

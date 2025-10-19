@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       } else {
         alert("Failed to add email")
       }
-    } catch (error) {
+    } catch {
       alert("Error adding email")
     }
   }
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       if (response.ok) {
         await loadProtectedEmails()
       }
-    } catch (error) {
+    } catch {
       alert("Error toggling lock")
     }
   }
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
         if (response.ok) {
           await loadProtectedEmails()
         }
-      } catch (error) {
+      } catch {
         alert("Error deleting email")
       }
     }
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
         setEditingKeyId(null)
         setNewKeyValue("")
       }
-    } catch (error) {
+    } catch {
       alert("Error updating key")
     }
   }

@@ -3,16 +3,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Search, Shield, X, AlertCircle, Inbox, CheckCircle2, Calendar, User, Mail, Check, Copy, HomeIcon, Sun, Moon, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dock, DockIcon } from "@/components/ui/dock";
-import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { TextAnimate } from "@/components/ui/text-animate";
-import { Mail, ArrowRight, Shield, Search, Inbox, Calendar, User, AlertCircle, CheckCircle2, X, Clock, Copy, Check, Sun, Moon, Home as HomeIcon, Settings } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import confetti from "canvas-confetti";
@@ -27,7 +27,7 @@ interface EmailMessage {
 }
 
 export default function Home() {
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [accessKey, setAccessKey] = useState("");
@@ -108,7 +108,7 @@ export default function Home() {
       // Access granted
       setNeedsKey(false);
       await performSearch();
-    } catch (error) {
+    } catch {
       setError("Failed to verify email protection");
     }
   };
@@ -170,8 +170,8 @@ export default function Home() {
         await navigator.clipboard.writeText(selectedMessage.body);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy:", err);
+      } catch (error) {
+        console.error("Search error:", error);
       }
     }
   };

@@ -87,8 +87,8 @@ export async function POST(request: NextRequest) {
               });
 
               fetch.on("message", (msg, seqno) => {
-                msg.on("body", (stream: any) => {
-                  simpleParser(stream, async (err: any, parsed: any) => {
+                msg.on("body", (stream) => {
+                  simpleParser(stream as never, async (err, parsed) => {
                     if (err) {
                       console.error("Parse error:", err);
                       return;
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
                 });
               });
 
-              fetch.once("error", (err: any) => {
+              fetch.once("error", (err) => {
                 reject(err);
               });
 
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
           });
         });
 
-        imap.once("error", (err: any) => {
+        imap.once("error", (err: Error) => {
           reject(err);
         });
 
@@ -147,10 +147,10 @@ export async function POST(request: NextRequest) {
       count: results.length,
       messages: results,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("IMAP Error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to search emails" },
+      { error: error instanceof Error ? error.message : "Failed to search emails" },
       { status: 500 }
     );
   }
