@@ -140,8 +140,8 @@ export default function Home() {
       if (data.messages && data.messages.length > 0) {
         setTimeout(() => fireConfetti(), 300);
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }

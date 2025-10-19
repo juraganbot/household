@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const searchEmails = (): Promise<EmailMessage[]> => {
       return new Promise((resolve, reject) => {
         imap.once("ready", () => {
-          imap.openBox("INBOX", true, (err, box) => {
+          imap.openBox("INBOX", true, (err) => {
             if (err) {
               reject(err);
               return;
