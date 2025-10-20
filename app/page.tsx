@@ -210,18 +210,14 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 md:p-8 pt-24 pb-20 bg-gradient-to-br from-background via-background to-muted/20 relative">
+    <div className={`min-h-screen flex flex-col items-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-background via-background to-muted/20 relative ${
+      isLoading || searchCompleted ? 'justify-start pt-8' : 'justify-center'
+    }`}>
       {/* Container utama */}
       <motion.main 
         className="w-full max-w-md flex flex-col items-center gap-8 text-center"
-        animate={{
-          marginTop: isLoading || searchCompleted ? "2rem" : "auto",
-        }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
-        style={{
-          marginTop: isLoading || searchCompleted ? "2rem" : "auto",
-          marginBottom: "auto",
-        }}
+        layout
+        transition={{ duration: 0.4, ease: "easeInOut" }}
       >
         {/* Header Section */}
         <div className="space-y-5 py-4">
