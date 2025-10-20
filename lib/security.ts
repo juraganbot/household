@@ -1,10 +1,13 @@
 /**
  * Security utilities for filtering sensitive content
+ * 
+ * IMPORTANT: Only blocks 6-digit verification codes
+ * 4-digit codes are preserved for sign-in purposes
  */
 
-// Patterns untuk detect kode verifikasi
+// Patterns untuk detect kode verifikasi (ONLY 6 DIGITS - NOT 4 DIGITS)
 const VERIFICATION_CODE_PATTERNS = [
-  // 6 digit code (most common)
+  // 6 digit code ONLY (not 4, not 8)
   /\b\d{6}\b/g,
   
   // 6 digit dengan spacing atau separator
@@ -16,11 +19,8 @@ const VERIFICATION_CODE_PATTERNS = [
   // Letter spacing style (common in emails)
   /letter-spacing[^>]*>\s*\d{6}\s*</gi,
   
-  // Common verification code keywords + 6 digits
+  // Common verification code keywords + 6 digits ONLY
   /(verification code|kode verifikasi|otp|pin|code|kode)[\s\S]{0,50}\b\d{6}\b/gi,
-  
-  // 4-8 digit codes (optional, more aggressive)
-  /\b\d{4,8}\b/g,
 ];
 
 // Keywords yang indicate verification email
