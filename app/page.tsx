@@ -220,65 +220,107 @@ export default function Home() {
         transition={{ duration: 0.4, ease: "easeInOut" }}
       >
         {/* Header Section */}
-        <div className="space-y-5 py-4">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-none pb-3 pt-2">
-            Waroengku;
-          </h1>
-          <p className="text-muted-foreground/60 text-sm max-w-xs mx-auto">
-            Search emails in the last 24 hours
-          </p>
+        <div className="space-y-6 py-4">
+          <div className="space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-foreground leading-none">
+                Waroengku
+              </h1>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex items-center justify-center gap-2"
+            >
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50"></div>
+              <Mail className="size-4 text-primary" />
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50"></div>
+            </motion.div>
+            
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="text-muted-foreground/70 text-sm max-w-md mx-auto leading-relaxed"
+            >
+              Secure email search powered by IMAP
+              <br />
+              <span className="text-xs text-muted-foreground/50">Last 24 hours • Protected access</span>
+            </motion.p>
+          </div>
         </div>
 
-        {/* Email Search Form - Minimal */}
-        <form 
+        {/* Email Search Form - Enhanced */}
+        <motion.form 
           onSubmit={handleSubmit} 
-          className="w-full space-y-3 px-4 sm:px-0"
+          className="w-full space-y-4 px-4 sm:px-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
         >
-          <div className="flex gap-2">
-            {/* Input Minimal */}
-            <div className="relative flex-1">
-              <Input
-                type="email"
-                placeholder="email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11 text-sm border focus:border-foreground transition-colors w-full cursor-text"
-              />
-            </div>
+          <div className="relative group">
+            {/* Glow effect */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+            
+            <div className="relative flex gap-2 bg-background rounded-lg p-1 border border-border/50 shadow-sm">
+              {/* Input Enhanced */}
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none z-10" />
+                <Input
+                  type="email"
+                  placeholder="Enter email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-11 text-sm border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent w-full cursor-text pl-10 pr-3"
+                />
+              </div>
 
-            {/* Button Minimal */}
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="h-11 px-5 shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
-              size="default"
-            >
-              {isLoading ? (
-                <svg
-                  className="animate-spin size-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              ) : (
-                <Search className="size-4" />
-              )}
-            </Button>
+              {/* Button Enhanced */}
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="h-11 px-6 shrink-0 cursor-pointer bg-primary hover:bg-primary/90 transition-all duration-200 shadow-sm hover:shadow-md"
+                size="default"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="animate-spin size-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium">Searching</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Search className="size-4" />
+                    <span className="text-sm font-medium">Search</span>
+                  </div>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Access Key Input - Inline */}
@@ -323,7 +365,7 @@ export default function Home() {
           <p className="text-center text-xs text-muted-foreground/40">
             {needsKey ? "🔒 Protected email - Key required" : "Secure IMAP connection"}
           </p>
-        </form>
+        </motion.form>
 
         {/* Skeleton Loading */}
         {isLoading && <SkeletonLoader />}
