@@ -1,13 +1,25 @@
 /**
  * Security utilities for filtering sensitive content
  * 
- * Simple subject-based blacklist (no regex)
+ * Blacklist based on subject + verification links
  */
 
 // Blacklist subject keywords (exact phrases to block)
 const BLACKLIST_SUBJECTS = [
   'kode verifikasimu',
   'your verification code',
+];
+
+// Blacklist URL patterns (verification/token links)
+const BLACKLIST_URL_PATTERNS = [
+  'verify?token=',
+  'verification?token=',
+  'confirm?token=',
+  'activate?token=',
+  '/verify/',
+  '/verification/',
+  '/confirm/',
+  '/activate/',
 ];
 
 /**
@@ -24,16 +36,44 @@ export function isBlacklistedSubject(subject: string): boolean {
   );
 }
 
+/**
+ * Check if body/snippet contains verification links
+ */
+export function containsVerificationLink(content: string): boolean {
+  if (!content) return false;
+  
+  const lowerContent = content.toLowerCase();
+  
+  // Check if content contains any blacklisted URL pattern
+  return BLACKLIST_URL_PATTERNS.some(pattern => 
+    lowerContent.includes(pattern.toLowerCase())
+  );
+}
+
 
 /**
- * Filter messages to remove blacklisted emails (subject-based only)
+ * Filter messages to remove blacklisted emails (subject + verification links)
  */
 export function filterVerificationEmails<T extends { subject: string; body: string; snippet: string }>(
   messages: T[]
 ): T[] {
   return messages.filter(message => {
-    // Only check subject line against blacklist
-    return !isBlacklistedSubject(message.subject);
+    // Check 1: Subject line blacklist
+    if (isBlacklistedSubject(message.subject)) {
+      return false;
+    }
+    
+    // Check 2: Verification links in body
+    if (containsVerificationLink(message.body)) {
+      return false;
+    }
+    
+    // Check 3: Verification links in snippet
+    if (containsVerificationLink(message.snippet)) {
+      return false;
+    }
+    
+    return true;
   });
 }
 
