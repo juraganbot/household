@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAccessKey, getProtectedEmailByAddress } from '@/lib/database';
+import { connectDB } from '@/lib/mongodb';
+import ProtectedEmail from '@/models/ProtectedEmail';
 
 // POST - Verify access key for email
 export async function POST(request: NextRequest) {
@@ -13,7 +14,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const protectedEmail = getProtectedEmailByAddress(email);
+    await connectDB();
+    
+    const protectedEmail = await ProtectedEmail.findOne({ email: email.toLowerCase() });
     
     // Email not protected or unlocked
     if (!protectedEmail || !protectedEmail.isLocked) {
@@ -35,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Verify access key
-    const isValid = verifyAccessKey(email, accessKey);
+    const isValid = protectedEmail.accessKey === accessKey;
     
     if (!isValid) {
       return NextResponse.json({
@@ -45,6 +48,12 @@ export async function POST(request: NextRequest) {
         message: 'Invalid access key',
       }, { status: 403 });
     }
+    
+    // Update last accessed time and increment access count
+    await ProtectedEmail.findByIdAndUpdate(protectedEmail._id, {
+      $set: { lastAccessedAt: new Date() },
+      $inc: { accessCount: 1 },
+    });
     
     return NextResponse.json({
       success: true,

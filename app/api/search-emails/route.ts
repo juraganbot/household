@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Imap from "imap";
 import { simpleParser } from "mailparser";
 import { filterVerificationEmails, getFilterStats } from "@/lib/security";
+import { connectDB } from "@/lib/mongodb";
+import SearchHistory from "@/models/SearchHistory";
 
 interface EmailMessage {
   id: string;
@@ -146,6 +148,22 @@ export async function POST(request: NextRequest) {
     // Filter out verification emails
     const filteredResults = filterVerificationEmails(results);
     const stats = getFilterStats(results);
+
+    // Log search to MongoDB
+    try {
+      await connectDB();
+      await SearchHistory.create({
+        email: targetEmail,
+        searchedAt: new Date(),
+        resultsCount: filteredResults.length,
+        blockedCount: stats.filtered,
+        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      });
+    } catch (logError) {
+      console.error('Failed to log search history:', logError);
+      // Don't fail the request if logging fails
+    }
 
     return NextResponse.json({
       success: true,

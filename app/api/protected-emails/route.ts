@@ -1,57 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getAllProtectedEmails,
-  addProtectedEmail,
-  updateProtectedEmail,
-  deleteProtectedEmail,
-  verifyAdminKey,
-  generateAccessKey,
-  getDatabaseStats,
-} from '@/lib/database';
+import { connectDB } from '@/lib/mongodb';
+import ProtectedEmail from '@/models/ProtectedEmail';
+import AdminSession from '@/models/AdminSession';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'waroengku-secret-key-2025';
+
+async function verifyAdminSession(authHeader: string | null): Promise<boolean> {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    jwt.verify(token, JWT_SECRET);
+    await connectDB();
+    
+    const session = await AdminSession.findOne({
+      token,
+      isActive: true,
+      expiresAt: { $gt: new Date() },
+    });
+    
+    if (session) {
+      // Update last activity
+      await AdminSession.findByIdAndUpdate(session._id, {
+        $set: { lastActivityAt: new Date() },
+      });
+      return true;
+    }
+    
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function generateAccessKey(): string {
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
 
 // GET - Get all protected emails
 export async function GET(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
+    const authHeader = request.headers.get('authorization');
     
-    if (!adminKey || !verifyAdminKey(adminKey)) {
+    const isValid = await verifyAdminSession(authHeader);
+    if (!isValid) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Invalid or expired session' },
         { status: 401 }
       );
     }
     
-    const emails = getAllProtectedEmails();
-    const stats = getDatabaseStats();
+    await connectDB();
+    
+    const emails = await ProtectedEmail.find().sort({ createdAt: -1 }).lean();
+    const totalCount = await ProtectedEmail.countDocuments();
+    const lockedCount = await ProtectedEmail.countDocuments({ isLocked: true });
+    const unlockedCount = await ProtectedEmail.countDocuments({ isLocked: false });
     
     return NextResponse.json({
       success: true,
       emails,
-      stats,
+      stats: {
+        total: totalCount,
+        locked: lockedCount,
+        unlocked: unlockedCount,
+      },
     });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    } else {
-      return NextResponse.json(
-        { error: 'Failed to get protected emails' },
-        { status: 500 }
-      );
-    }
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to get protected emails' },
+      { status: 500 }
+    );
   }
 }
 
 // POST - Add new protected email
 export async function POST(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
+    const authHeader = request.headers.get('authorization');
     
-    if (!adminKey || !verifyAdminKey(adminKey)) {
+    const isValid = await verifyAdminSession(authHeader);
+    if (!isValid) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Invalid or expired session' },
         { status: 401 }
       );
     }
@@ -65,8 +101,23 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    await connectDB();
+    
+    const existing = await ProtectedEmail.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return NextResponse.json(
+        { error: 'Email already exists' },
+        { status: 409 }
+      );
+    }
+    
     const finalKey = accessKey || generateAccessKey();
-    const newEmail = addProtectedEmail(email, finalKey);
+    const newEmail = await ProtectedEmail.create({
+      email: email.toLowerCase(),
+      accessKey: finalKey,
+      isLocked: true,
+      accessCount: 0,
+    });
     
     return NextResponse.json({
       success: true,
@@ -83,11 +134,12 @@ export async function POST(request: NextRequest) {
 // PATCH - Update protected email
 export async function PATCH(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
+    const authHeader = request.headers.get('authorization');
     
-    if (!adminKey || !verifyAdminKey(adminKey)) {
+    const isValid = await verifyAdminSession(authHeader);
+    if (!isValid) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Invalid or expired session' },
         { status: 401 }
       );
     }
@@ -101,7 +153,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
     
-    const updatedEmail = updateProtectedEmail(id, updates);
+    await connectDB();
+    
+    const updatedEmail = await ProtectedEmail.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
     
     if (!updatedEmail) {
       return NextResponse.json(
@@ -125,11 +183,12 @@ export async function PATCH(request: NextRequest) {
 // DELETE - Delete protected email
 export async function DELETE(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
+    const authHeader = request.headers.get('authorization');
     
-    if (!adminKey || !verifyAdminKey(adminKey)) {
+    const isValid = await verifyAdminSession(authHeader);
+    if (!isValid) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Invalid or expired session' },
         { status: 401 }
       );
     }
@@ -144,7 +203,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const deleted = deleteProtectedEmail(id);
+    await connectDB();
+    
+    const deleted = await ProtectedEmail.findByIdAndDelete(id);
     
     if (!deleted) {
       return NextResponse.json(
