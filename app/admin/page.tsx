@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,21 +36,28 @@ export default function AdminDashboard() {
   const [batchResult, setBatchResult] = useState<{ success: number; failed: number; errors: string[] } | null>(null)
   const [viewKeyDialog, setViewKeyDialog] = useState<{ open: boolean; email: ProtectedEmail | null }>({ open: false, email: null })
 
-  useEffect(() => {
-    verifySession()
-  }, [])
-
-  useEffect(() => {
-    if (isAuthenticated && authToken) {
-      loadProtectedEmails()
-      const interval = setInterval(() => {
-        verifySession()
-      }, 30000)
-      return () => clearInterval(interval)
+  const handleLogout = useCallback(async () => {
+    if (authToken) {
+      try {
+        await fetch('/api/admin/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        })
+      } catch {
+      }
     }
-  }, [isAuthenticated, authToken])
+    
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('tokenExpires')
+    setAuthToken(null)
+    setSessionExpiry(null)
+    setIsAuthenticated(false)
+    setProtectedEmails([])
+  }, [authToken])
 
-  const verifySession = async () => {
+  const verifySession = useCallback(async () => {
     const token = localStorage.getItem('adminToken')
     const expiry = localStorage.getItem('tokenExpires')
     
@@ -89,7 +96,41 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [handleLogout])
+
+  useEffect(() => {
+    verifySession()
+  }, [verifySession])
+
+  const loadProtectedEmails = useCallback(async () => {
+    if (!authToken) return
+    
+    try {
+      const response = await fetch("/api/protected-emails", {
+        headers: {
+          "Authorization": `Bearer ${authToken}`,
+        },
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setProtectedEmails(data.emails || [])
+        setStats(data.stats || { total: 0, locked: 0, unlocked: 0 })
+      }
+    } catch (error) {
+      console.error("Failed to load protected emails:", error)
+    }
+  }, [authToken])
+
+  useEffect(() => {
+    if (isAuthenticated && authToken) {
+      loadProtectedEmails()
+      const interval = setInterval(() => {
+        verifySession()
+      }, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated, authToken, loadProtectedEmails, verifySession])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,47 +160,6 @@ export default function AdminDashboard() {
       setLoginError('Network error')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    if (authToken) {
-      try {
-        await fetch('/api/admin/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        })
-      } catch {
-      }
-    }
-    
-    localStorage.removeItem('adminToken')
-    localStorage.removeItem('tokenExpires')
-    setAuthToken(null)
-    setSessionExpiry(null)
-    setIsAuthenticated(false)
-    setProtectedEmails([])
-  }
-
-  const loadProtectedEmails = async () => {
-    if (!authToken) return
-    
-    try {
-      const response = await fetch("/api/protected-emails", {
-        headers: {
-          "Authorization": `Bearer ${authToken}`,
-        },
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setProtectedEmails(data.emails || [])
-        setStats(data.stats || { total: 0, locked: 0, unlocked: 0 })
-      }
-    } catch (error) {
-      console.error("Failed to load protected emails:", error)
     }
   }
 
