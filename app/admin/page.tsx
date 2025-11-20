@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const [newEmail, setNewEmail] = useState("")
   const [customKey, setCustomKey] = useState("")
   const [showAddForm, setShowAddForm] = useState(false)
+  const [overwriteMode, setOverwriteMode] = useState(true)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState("")
@@ -180,15 +181,26 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({ 
           email: newEmail,
-          accessKey: finalKey 
+          accessKey: finalKey,
+          overwrite: overwriteMode
         }),
       })
+
+      const data = await response.json()
 
       if (response.ok) {
         await loadProtectedEmails()
         setShowAddForm(false)
         setNewEmail("")
         setCustomKey("")
+        
+        if (data.updated) {
+          alert(`✅ Access key updated for ${newEmail}`)
+        } else {
+          alert(`✅ Email added successfully: ${newEmail}`)
+        }
+      } else {
+        alert(data.error || "Error adding email")
       }
     } catch {
       alert("Error adding email")
@@ -291,7 +303,11 @@ export default function AdminDashboard() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${authToken}`,
           },
-          body: JSON.stringify({ email, accessKey: key }),
+          body: JSON.stringify({ 
+            email, 
+            accessKey: key,
+            overwrite: overwriteMode
+          }),
         })
 
         if (response.ok) {
@@ -516,9 +532,22 @@ export default function AdminDashboard() {
                     onChange={(e) => setCustomKey(e.target.value)}
                     className="cursor-text"
                   />
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
+                    <input
+                      type="checkbox"
+                      id="overwrite-mode"
+                      checked={overwriteMode}
+                      onChange={(e) => setOverwriteMode(e.target.checked)}
+                      className="cursor-pointer w-4 h-4"
+                    />
+                    <label htmlFor="overwrite-mode" className="text-sm cursor-pointer flex-1">
+                      <span className="font-medium">Overwrite existing keys</span>
+                      <p className="text-xs text-muted-foreground">If email exists, update the access key instead of showing error</p>
+                    </label>
+                  </div>
                   <Button onClick={handleAddEmail} className="w-full cursor-pointer">
                     <Plus className="size-4 mr-2" />
-                    Add Email
+                    {overwriteMode ? 'Add or Update Email' : 'Add Email'}
                   </Button>
                 </div>
               </CardContent>
@@ -556,6 +585,20 @@ export default function AdminDashboard() {
                     className="w-full p-3 text-sm border rounded-md bg-background resize-none font-mono"
                   />
                   
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md">
+                    <input
+                      type="checkbox"
+                      id="batch-overwrite-mode"
+                      checked={overwriteMode}
+                      onChange={(e) => setOverwriteMode(e.target.checked)}
+                      className="cursor-pointer w-4 h-4"
+                    />
+                    <label htmlFor="batch-overwrite-mode" className="text-sm cursor-pointer flex-1">
+                      <span className="font-medium">Overwrite existing keys</span>
+                      <p className="text-xs text-muted-foreground">Update keys for existing emails instead of skipping them</p>
+                    </label>
+                  </div>
+                  
                   {batchResult && (
                     <div className="space-y-2">
                       <div className="flex gap-4 text-sm">
@@ -587,7 +630,7 @@ export default function AdminDashboard() {
                     ) : (
                       <>
                         <Upload className="size-4 mr-2" />
-                        Import Licenses
+                        {overwriteMode ? 'Import & Update Licenses' : 'Import Licenses'}
                       </>
                     )}
                   </Button>

@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Add new protected email
+// POST - Add new protected email or update existing key
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const { email, accessKey } = await request.json();
+    const { email, accessKey, overwrite } = await request.json();
     
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -104,11 +104,33 @@ export async function POST(request: NextRequest) {
     await connectDB();
     
     const existing = await ProtectedEmail.findOne({ email: email.toLowerCase() });
+    
     if (existing) {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 409 }
-      );
+      if (overwrite) {
+        const finalKey = accessKey || generateAccessKey();
+        const updated = await ProtectedEmail.findByIdAndUpdate(
+          existing._id,
+          { 
+            $set: { 
+              accessKey: finalKey,
+              updatedAt: new Date()
+            } 
+          },
+          { new: true }
+        );
+        
+        return NextResponse.json({
+          success: true,
+          email: updated,
+          message: 'Access key updated successfully',
+          updated: true,
+        });
+      } else {
+        return NextResponse.json(
+          { error: 'Email already exists' },
+          { status: 409 }
+        );
+      }
     }
     
     const finalKey = accessKey || generateAccessKey();
@@ -122,6 +144,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       email: newEmail,
+      message: 'Email added successfully',
+      updated: false,
     });
   } catch (error) {
     return NextResponse.json(
